@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Activities</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        .done { text-decoration: line-through; color: gray; }
+        button { margin-left: 0.5em; }
+    </style>
+</head>
+<body>
+    <h1>Activities</h1>
+    <form id="addForm">
+        <input type="text" id="desc" placeholder="New activity..." required>
+        <button type="submit">Add</button>
+    </form>
+    <ul id="list"></ul>
+
+    <script>
+        const API = '/actividades';
+
+        function fetchActivities() {
+            fetch(API)
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById('list');
+                    list.innerHTML = '';
+                    data.forEach(act => {
+                        const li = document.createElement('li');
+                        li.textContent = act.descripcion;
+                        if (act.realizada) li.classList.add('done');
+                        li.appendChild(makeDoneBtn(act));
+                        li.appendChild(makeDeleteBtn(act));
+                        list.appendChild(li);
+                    });
+                });
+        }
+
+        function makeDoneBtn(act) {
+            const btn = document.createElement('button');
+            btn.textContent = 'Done';
+            btn.disabled = act.realizada;
+            btn.onclick = () => {
+                fetch(`${API}/${act.id}`, { method: 'PUT' })
+                    .then(fetchActivities);
+            };
+            return btn;
+        }
+
+        function makeDeleteBtn(act) {
+            const btn = document.createElement('button');
+            btn.textContent = 'Delete';
+            btn.onclick = () => {
+                fetch(`${API}/${act.id}`, { method: 'DELETE' })
+                    .then(fetchActivities);
+            };
+            return btn;
+        }
+
+        document.getElementById('addForm').onsubmit = e => {
+            e.preventDefault();
+            const desc = document.getElementById('desc').value;
+            fetch(API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ descripcion: desc })
+            }).then(() => {
+                document.getElementById('desc').value = '';
+                fetchActivities();
+            });
+        };
+
+        fetchActivities();
+    </script>
+</body>
+</html>
