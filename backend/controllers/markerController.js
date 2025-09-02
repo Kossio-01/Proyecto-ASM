@@ -11,14 +11,14 @@ const getMarkers = (req, res) => {
 
 const createMarker = (req, res) => {
     try {
-        const { lat, lng, title, description } = req.body;
+        const { lat, lng, name, description } = req.body; // Cambiar title por name
         const markers = readMarkers();
 
         const newMarker = {
             id: Date.now().toString(),
             lat,
             lng,
-            title: title || 'Marcador',
+            name: name || 'Marcador', // Cambiar title por name
             description: description || '',
             createdAt: new Date().toISOString()
         };

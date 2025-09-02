@@ -1,0 +1,18 @@
+[
+  {
+    "id": "1756823872431",
+    "lat": 3.34477447011965,
+    "lng": -76.55985832214357,
+    "name": "Marcador 1",
+    "description": "Nuevo marcador en el río",
+    "createdAt": "2025-09-02T14:37:52.431Z"
+  },
+  {
+    "id": "1756823881001",
+    "lat": 3.34477447011965,
+    "lng": -76.55985832214357,
+    "name": "Test",
+    "description": "Nuevo marcador en el río",
+    "createdAt": "2025-09-02T14:38:01.001Z"
+  }
+]
