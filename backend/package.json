@@ -6,12 +6,13 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "build": "echo 'No build process needed'"
+    "build": "cd public/Front/ASM/proyecto1 && npm install && npm run build",
+    "build:react": "cd public/Front/ASM/proyecto1 && npm run build"
   },
   "dependencies": {
-    "express": "^4.18.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.0.0"
+    "dotenv": "^16.0.0",
+    "express": "^4.18.2"
   },
   "engines": {
     "node": ">=18.0.0"
