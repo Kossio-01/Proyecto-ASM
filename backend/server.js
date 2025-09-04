@@ -20,7 +20,7 @@ console.log('- __dirname:', __dirname);
 
 // Verificar múltiples rutas posibles para los archivos
 const possiblePaths = [
-  path.join(__dirname, 'public/Front/ASM/proyecto1/dist'),
+  path.join(__dirname, 'public'),
   path.join(__dirname, 'public/dist'),
   path.join(__dirname, 'dist'),
   path.join(process.cwd(), 'public/Front/ASM/proyecto1/dist')
