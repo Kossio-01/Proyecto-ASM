@@ -18,17 +18,34 @@ console.log('- PORT:', process.env.PORT || 'No definido (usando 8000)');
 console.log('- NODE_ENV:', process.env.NODE_ENV || 'No definido');
 console.log('- __dirname:', __dirname);
 
-// Verificar estructura de archivos
-const distPath = path.join(__dirname, 'public/Front/ASM/proyecto1/dist');
-const indexPath = path.join(distPath, 'index.html');
+// Verificar múltiples rutas posibles para los archivos
+const possiblePaths = [
+  path.join(__dirname, 'public/Front/ASM/proyecto1/dist'),
+  path.join(__dirname, 'public/dist'),
+  path.join(__dirname, 'dist'),
+  path.join(process.cwd(), 'public/Front/ASM/proyecto1/dist')
+];
 
-console.log('📁 Verificando archivos:');
-console.log('- Carpeta dist existe:', fs.existsSync(distPath));
-console.log('- index.html existe:', fs.existsSync(indexPath));
+let distPath = null;
+let indexPath = null;
 
-if (fs.existsSync(distPath)) {
+console.log('📁 Verificando rutas posibles:');
+for (const p of possiblePaths) {
+  console.log(`- Verificando: ${p} -> ${fs.existsSync(p) ? '✅ Existe' : '❌ No existe'}`);
+  if (fs.existsSync(p)) {
+    const indexFile = path.join(p, 'index.html');
+    if (fs.existsSync(indexFile)) {
+      distPath = p;
+      indexPath = indexFile;
+      console.log(`✅ Usando: ${distPath}`);
+      break;
+    }
+  }
+}
+
+if (distPath && fs.existsSync(distPath)) {
   const files = fs.readdirSync(distPath);
-  console.log('- Archivos en dist:', files.slice(0, 5)); // Mostrar solo 5
+  console.log('- Archivos en dist:', files);
 }
 
 // Middleware
@@ -60,16 +77,42 @@ app.get('/api/saludo', (req, res) => {
     mensaje: '¡Hola desde el backend!',
     puerto: PORT,
     entorno: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    distPath: distPath || 'No encontrado',
+    filesFound: distPath ? fs.readdirSync(distPath) : []
+  });
+});
+
+// API de diagnóstico para archivos
+app.get('/api/debug', (req, res) => {
+  res.json({
+    __dirname,
+    'process.cwd()': process.cwd(),
+    distPath,
+    indexPath,
+    'distExists': distPath ? fs.existsSync(distPath) : false,
+    'indexExists': indexPath ? fs.existsSync(indexPath) : false,
+    'files': distPath && fs.existsSync(distPath) ? fs.readdirSync(distPath) : []
   });
 });
 
 // Servir archivos estáticos de React
-if (fs.existsSync(distPath)) {
+if (distPath && fs.existsSync(distPath)) {
   app.use(express.static(distPath));
   console.log('✅ Sirviendo archivos estáticos desde:', distPath);
 } else {
-  console.error('❌ No se encontró la carpeta dist');
+  console.error('❌ No se encontró la carpeta dist en ninguna ruta');
+
+  // Fallback: intentar servir desde múltiples ubicaciones
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      app.use(express.static(p));
+      console.log(`🔄 Fallback: Sirviendo desde ${p}`);
+      distPath = p;
+      indexPath = path.join(p, 'index.html');
+      break;
+    }
+  }
 }
 
 // Ruta catch-all para React Router
@@ -81,19 +124,26 @@ app.get('*', (req, res) => {
     return res.status(404).json({ error: 'API no encontrada' });
   }
 
-  if (fs.existsSync(indexPath)) {
+  if (indexPath && fs.existsSync(indexPath)) {
     console.log('✅ Sirviendo index.html para:', req.path);
     res.sendFile(indexPath);
   } else {
-    console.error('❌ index.html no encontrado en:', indexPath);
-    res.status(404).send('Aplicación no encontrada');
+    console.error('❌ index.html no encontrado');
+    res.status(404).send(`
+      <h1>🔍 Archivo no encontrado</h1>
+      <p>La aplicación React no está disponible.</p>
+      <p>Ruta buscada: ${indexPath || 'No definida'}</p>
+      <p><a href="/api/debug">Ver información de debugging</a></p>
+      <p><a href="/api/saludo">Probar API</a></p>
+    `);
   }
 });
 
 // Iniciar servidor
 app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-    console.log(`🌍 Sirviendo React desde: ${distPath}`);
+    console.log(`🌍 Sirviendo React desde: ${distPath || 'No encontrado'}`);
     console.log(`🔗 URL base: http://localhost:${PORT}`);
     console.log(`🧪 API de prueba: http://localhost:${PORT}/api/saludo`);
+    console.log(`🔍 Debug: http://localhost:${PORT}/api/debug`);
 });
